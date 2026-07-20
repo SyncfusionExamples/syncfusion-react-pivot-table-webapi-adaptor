@@ -76,7 +76,9 @@ Make sure the following software and packages are installed on your machine befo
 | ----------------------------- | ------------- | --------------------------------------------- |
 | 🟢 Node.js                    | 18.x or later | Runtime for the React development server      |
 | ⚛️ React                      | 18.x or later | Build the Pivot Table client                  |
-| 🟣 .NET SDK                   | 8.0 or later  | Build and run the ASP.NET Core Web API        |
+| � TypeScript                 | 5.x or later  | Type-safe development of the React client     |
+| ⚡ Vite                       | 5.x or later  | Fast dev server and build tool for the React client |
+| �🟣 .NET SDK                   | 8.0 or later  | Build and run the ASP.NET Core Web API        |
 | 🧑‍💻 Visual Studio / VS Code  | Latest        | Configure and run the backend API             |
 | 📦 @syncfusion/ej2-react-pivotview | 33.1.45+ | React Pivot Table component                   |
 | 📦 @syncfusion/ej2-data       | 33.1.45+      | `DataManager` and `WebApiAdaptor`             |
@@ -88,22 +90,21 @@ Make sure the following software and packages are installed on your machine befo
 
 ```
 webapi-adaptor-with-pivot-table/
-├── 📁 Client/                              # React frontend (Pivot Table)
+├── 📁 Client/                              # React frontend (Pivot Table, TypeScript)
 │   ├── 📁 public/
-│   │   ├── index.html
-│   │   ├── manifest.json
-│   │   └── robots.txt
+│   │   └── index.html
 │   ├── 📁 src/
-│   │   ├── App.css                         # Component styles
-│   │   ├── App.js                          # Pivot Table with WebApiAdaptor configuration
-│   │   ├── App.test.js
-│   │   ├── datasource.js
+│   │   ├── App.css                          # Component styles
+│   │   ├── App.tsx                          # Pivot Table with WebApiAdaptor configuration
 │   │   ├── index.css
-│   │   ├── index.js                        # React entry point
-│   │   ├── logo.svg
-│   │   ├── reportWebVitals.js
-│   │   └── setupTests.js
-│   └── package.json                        # React dependencies & scripts
+│   │   ├── main.tsx                         # React entry point
+│   │   └── vite-env.d.ts
+│   ├── index.html
+│   ├── package.json                         # React dependencies & scripts
+│   ├── tsconfig.app.json
+│   ├── tsconfig.json
+│   ├── tsconfig.node.json
+│   └── vite.config.ts
 │
 ├── 📁 WebApiAdaptor/                       # ASP.NET Core Web API backend
 │   ├── 📁 Controllers/
@@ -119,8 +120,6 @@ webapi-adaptor-with-pivot-table/
 │   └── WebApiAdaptor.http                  # Endpoint testing file
 │
 ├── 📄 README.md                            # You are here
-├── 📄 webapi-adaptor.md                    # Detailed documentation (Markdown)
-└── 📄 url-adaptor.md                       # Related UrlAdaptor documentation
 ```
 
 ---
@@ -217,30 +216,32 @@ npm install
 
 #### 3.2 Verify the API URL
 
-Open `src/App.js` and ensure the `url` in the `DataManager` points to your backend port (default in this repo: `5200`).
+Open `src/App.tsx` and ensure the `url` in the `DataManager` points to your backend port (default in this repo: `5200`).
 
-```jsx
-// filepath: Client/src/App.js
+```tsx
+// filepath: Client/src/App.tsx
 import * as React from 'react';
-import { PivotViewComponent } from '@syncfusion/ej2-react-pivotview';
+import { PivotViewComponent, CellEditSettings } from '@syncfusion/ej2-react-pivotview';
 import { DataManager, WebApiAdaptor } from '@syncfusion/ej2-data';
+import type { DataSourceSettingsModel } from '@syncfusion/ej2-pivotview/src/model/datasourcesettings-model';
+import type { BeginDrillThroughEventArgs } from '@syncfusion/ej2-pivotview';
 import './App.css';
 
-function App() {
-    const data = new DataManager({
+function App(): React.ReactElement {
+    const data: DataManager = new DataManager({
         url: 'http://localhost:5200/api/Orders',   // 👈 Update this if your backend uses a different port
         adaptor: new WebApiAdaptor(),
         crossDomain: true
     });
 
-    const editSettings = {
+    const editSettings: CellEditSettings = {
         allowEditing: true,
         allowAdding: true,
         allowDeleting: true,
         mode: 'Normal'
     };
 
-    const dataSourceSettings = {
+    const dataSourceSettings: DataSourceSettingsModel = {
         dataSource: data,
         expandAll: false,
         rows: [{ name: 'CustomerID' }],
@@ -249,9 +250,9 @@ function App() {
         formatSettings: [{ name: 'Freight', format: 'N0' }],
     };
 
-    let pivotObj;
+    const pivotObj = React.useRef<PivotViewComponent>(null);
 
-    function beginDrillThrough(args) {
+    function beginDrillThrough(args: BeginDrillThroughEventArgs) {
         for (var i = 0; i < args.gridObj.columns.length; i++) {
             if (args.gridObj.columns[i].field === "OrderID") {
                 args.gridObj.columns[i].isPrimaryKey = true;
@@ -267,7 +268,7 @@ function App() {
     return (
         <div className='control-section' style={{ margin: 100 }}>
             <PivotViewComponent
-                ref={d => pivotObj = d}
+                ref={pivotObj}
                 id='PivotView'
                 height={350}
                 width={700}
@@ -302,16 +303,16 @@ The API will start on a URL like `https://localhost:5200` (or `http://localhost:
 - 🌐 Open `https://localhost:5200/api/Orders` in your browser.
 - ✅ You should see JSON in the format `{ Items: [...], Count: 45 }`.
 
-> 📝 Note the port number in the terminal output and update `url` in `Client/src/App.js` if it is different from `5200`.
+> 📝 Note the port number in the terminal output and update `url` in `Client/src/App.tsx` if it is different from `5200`.
 
 ### ▶️ Start the Frontend (Terminal 2)
 
 ```bash
 cd Client
-npm start
+npm run dev
 ```
 
-The React app will open at `http://localhost:3000` by default. 🎉
+The React app will open at `http://localhost:5173` by default (Vite dev server). 🎉
 
 You should see the Pivot Table populated with aggregated **Freight** values, grouped by **CustomerID** (rows) and **OrderID** (columns).
 
@@ -345,7 +346,7 @@ The Pivot Table supports full CRUD through its built-in **drill-through editing*
 | ❓ Issue                                | 🔍 Symptom                                                                                                       | ✅ Resolution                                                                                                                |
 | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | 🚫 Empty Pivot Table                    | Pivot loads with no errors but no rows or values appear.                                                          | Ensure the API returns `{ Items, Count }` and that field names match the `dataSourceSettings` (case-sensitive).               |
-| 404 Not Found                           | Network tab shows a 404 response when the Pivot Table loads.                                                     | Confirm the backend is running, the route is `[Route("api/[controller]")]`, and the URL in `App.js` matches the API port.     |
+| 404 Not Found                           | Network tab shows a 404 response when the Pivot Table loads.                                                     | Confirm the backend is running, the route is `[Route("api/[controller]")]`, and the URL in `App.tsx` matches the API port.     |
 | 💥 500 Internal Server Error            | The Pivot Table fails and the browser shows a server error.                                                      | Check the terminal/Visual Studio output for stack traces. Common causes: null reference or serialization issues.             |
 | 🌐 CORS Blocked                         | Console shows `Access to XMLHttpRequest ... has been blocked by CORS policy`.                                    | Verify CORS is configured in `Program.cs` and `app.UseCors()` is called **before** `app.MapControllers()`.                     |
 | 💾 CRUD operations not saving           | The edit dialog closes but changes are not reflected in the data.                                                | Confirm the primary key is set in `beginDrillThrough` and the backend routes match the WebApiAdaptor defaults (POST/PUT/DELETE). |
